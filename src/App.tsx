@@ -4,11 +4,18 @@ import { GlobalStyle } from "./styles/global";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { History } from "./pages/History";
 import { Home } from "./pages/Home";
+import { DefaultLayout } from "./layouts/DefaultLayout";
 
 export function App() {
   const router = createBrowserRouter([
-    { path: "/", element: <Home /> },
-    { path: "/history", element: <History /> },
+    {
+      element: <DefaultLayout />,
+      path: "/",
+      children: [
+        { path: "/", element: <Home /> },
+        { path: "/history", element: <History /> },
+      ],
+    },
   ]);
 
   return (
