@@ -9,4 +9,14 @@ export const LayoutContainer = styled.div`
   border-radius: 8px;
   display: flex;
   flex-direction: column;
+
+  ::-webkit-scrollbar {
+    width: 0.5rem;
+    height: 0.5rem;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: ${(props) => props.theme["green-300"]};
+    border-radius: 1.6rem;
+  }
 `;
