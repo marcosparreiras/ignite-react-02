@@ -9,13 +9,61 @@ import {
   StartCountDownButtonContainer,
   TaskInputContainer,
 } from "./styles";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useState } from "react";
+
+const newCycleValidationSchema = z.object({
+  task: z.string().min(1, "Informe a tarefa"),
+  minutesAmount: z.coerce
+    .number()
+    .min(0, "O ciclo precisa ser no minimo de 5 minutos")
+    .max(60, "O ciclo precisa ser de no máximo 60 minutos"),
+});
+
+type NewCycleFormData = z.infer<typeof newCycleValidationSchema>;
+
+interface Cycle {
+  id: string;
+  task: string;
+  minutesAmount: number;
+}
 
 export function Home() {
-  const form = useForm();
+  const [cycles, setCycles] = useState<Cycle[]>([]);
+  const [activeCycleId, setActiveCycleId] = useState<string | null>(null);
+  const [amountSecondsPassed, setAmountSecondsPassed] = useState<number>(0);
 
-  function handleNewCycle(data: any) {
-    console.log(data);
+  const form = useForm<NewCycleFormData>({
+    resolver: zodResolver(newCycleValidationSchema),
+    defaultValues: {
+      task: "",
+      minutesAmount: 0,
+    },
+  });
+
+  function handleNewCycle(data: NewCycleFormData) {
+    const newCycle: Cycle = {
+      id: new Date().getTime().toString(),
+      task: data.task,
+      minutesAmount: data.minutesAmount,
+    };
+    setCycles((prev) => [...prev, newCycle]);
+    setActiveCycleId(newCycle.id);
+
+    form.reset();
   }
+
+  const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId);
+
+  const totalSeconds = activeCycle ? activeCycle.minutesAmount * 60 : 0;
+  const currentSeconds = activeCycle ? totalSeconds - amountSecondsPassed : 0;
+
+  const minutesAmount = Math.floor(currentSeconds / 60);
+  const secondsAmount = currentSeconds % 60;
+
+  const minutes = minutesAmount.toString().padStart(2, "0");
+  const seconds = secondsAmount.toString().padStart(2, "0");
 
   const task = form.watch("task");
 
@@ -50,11 +98,11 @@ export function Home() {
         </FormContainer>
 
         <CountDownContainer>
-          <span>0</span>
-          <span>0</span>
+          <span>{minutes[0]}</span>
+          <span>{minutes[1]}</span>
           <SeparatorContainer>:</SeparatorContainer>
-          <span>0</span>
-          <span>0</span>
+          <span>{seconds[0]}</span>
+          <span>{seconds[1]}</span>
         </CountDownContainer>
 
         <StartCountDownButtonContainer disabled={!task} type="submit">
