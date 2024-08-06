@@ -11,7 +11,8 @@ import {
 } from "./styles";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { differenceInSeconds } from "date-fns";
 
 const newCycleValidationSchema = z.object({
   task: z.string().min(1, "Informe a tarefa"),
@@ -27,12 +28,29 @@ interface Cycle {
   id: string;
   task: string;
   minutesAmount: number;
+  startDate: Date;
 }
 
 export function Home() {
   const [cycles, setCycles] = useState<Cycle[]>([]);
   const [activeCycleId, setActiveCycleId] = useState<string | null>(null);
   const [amountSecondsPassed, setAmountSecondsPassed] = useState<number>(0);
+  const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId);
+
+  useEffect(() => {
+    let interval: number;
+
+    if (activeCycle) {
+      interval = setInterval(() => {
+        setAmountSecondsPassed(
+          differenceInSeconds(new Date(), activeCycle.startDate)
+        );
+      }, 1000);
+    }
+    return () => {
+      clearInterval(interval);
+    };
+  }, [activeCycle]);
 
   const form = useForm<NewCycleFormData>({
     resolver: zodResolver(newCycleValidationSchema),
@@ -47,14 +65,13 @@ export function Home() {
       id: new Date().getTime().toString(),
       task: data.task,
       minutesAmount: data.minutesAmount,
+      startDate: new Date(),
     };
     setCycles((prev) => [...prev, newCycle]);
     setActiveCycleId(newCycle.id);
-
+    setAmountSecondsPassed(0);
     form.reset();
   }
-
-  const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId);
 
   const totalSeconds = activeCycle ? activeCycle.minutesAmount * 60 : 0;
   const currentSeconds = activeCycle ? totalSeconds - amountSecondsPassed : 0;
@@ -67,6 +84,11 @@ export function Home() {
 
   const task = form.watch("task");
 
+  useEffect(() => {
+    if (activeCycle) {
+      document.title = `${minutes}:${seconds}`;
+    }
+  }, [minutes, seconds]);
   return (
     <HomeContainer>
       <form onSubmit={form.handleSubmit(handleNewCycle)}>
