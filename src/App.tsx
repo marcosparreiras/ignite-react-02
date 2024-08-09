@@ -5,6 +5,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { History } from "./pages/History";
 import { Home } from "./pages/Home";
 import { DefaultLayout } from "./layouts/DefaultLayout";
+import { CyclesContextProvider } from "./contexts/CyclesContext";
 
 export function App() {
   const router = createBrowserRouter([
@@ -20,7 +21,9 @@ export function App() {
 
   return (
     <ThemeProvider theme={defaultTheme}>
-      <RouterProvider router={router} />
+      <CyclesContextProvider>
+        <RouterProvider router={router} />
+      </CyclesContextProvider>
       <GlobalStyle />
     </ThemeProvider>
   );

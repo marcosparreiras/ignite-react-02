@@ -1,15 +1,17 @@
-import { useContext, useEffect } from "react";
+import { useEffect } from "react";
 import { CountDownContainer, SeparatorContainer } from "./styles";
-import { CyclesContext } from "..";
 import { differenceInSeconds } from "date-fns";
+import { useCyclesContext } from "../../../contexts/CyclesContext";
+import { useFormContext } from "react-hook-form";
 
 export function CountDown() {
   const {
     activeCycle,
-    markCurrentActiveCycleAsFineshed,
+    markActiveCycleAsFineshed,
     amountSecondsPassed,
     updateAmountSecondsPassed,
-  } = useContext(CyclesContext);
+  } = useCyclesContext();
+  const newCycleForm = useFormContext();
 
   const totalSeconds = activeCycle ? activeCycle.minutesAmount * 60 : 0;
   const currentSeconds = activeCycle ? totalSeconds - amountSecondsPassed : 0;
@@ -30,7 +32,8 @@ export function CountDown() {
         );
 
         if (secondsDifference > totalSeconds) {
-          markCurrentActiveCycleAsFineshed();
+          markActiveCycleAsFineshed();
+          newCycleForm.reset();
         } else {
           updateAmountSecondsPassed(secondsDifference);
         }
