@@ -1,6 +1,7 @@
 import {
   createContext,
   useContext,
+  useReducer,
   useState,
   type PropsWithChildren,
 } from "react";
@@ -28,15 +29,55 @@ export const CyclesContext = createContext<CyclesContextType>(
   {} as CyclesContextType
 );
 
+type Action =
+  | {
+      type: "ADD_NEW_CYCLE";
+      payload: { data: Cycle };
+    }
+  | {
+      type: "MARK_ACTIVE_CYCLE_AS_FINESHED" | "INTERRUPT_ACTIVE_CYCLE";
+      payload: { data: string };
+    };
+
 export function CyclesContextProvider({ children }: PropsWithChildren) {
-  const [cycles, setCycles] = useState<Cycle[]>([]);
+  const [cycles, dispatch] = useReducer((state: Cycle[], action: Action) => {
+    switch (action.type) {
+      case "ADD_NEW_CYCLE":
+        return [...state, action.payload.data];
+
+      case "MARK_ACTIVE_CYCLE_AS_FINESHED":
+        return state.map((cycle) => {
+          if (cycle.id === action.payload.data) {
+            return {
+              ...cycle,
+              finishedDate: new Date(),
+            };
+          }
+          return cycle;
+        });
+
+      case "INTERRUPT_ACTIVE_CYCLE":
+        return state.map((cycle) => {
+          if (cycle.id === action.payload.data) {
+            return {
+              ...cycle,
+              interruptedDate: new Date(),
+            };
+          }
+          return cycle;
+        });
+
+      default:
+        return state;
+    }
+  }, []);
   const [activeCycleId, setActiveCycleId] = useState<string | null>(null);
   const [amountSecondsPassed, setAmountSecondsPassed] = useState<number>(0);
 
   const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId);
 
   function startNewCycle(cycle: Cycle) {
-    setCycles((prev) => [...prev, cycle]);
+    dispatch({ type: "ADD_NEW_CYCLE", payload: { data: cycle } });
     setActiveCycleId(cycle.id);
     setAmountSecondsPassed(0);
   }
@@ -46,33 +87,23 @@ export function CyclesContextProvider({ children }: PropsWithChildren) {
   }
 
   function markActiveCycleAsFineshed() {
-    setCycles((prev) =>
-      prev.map((cycle) => {
-        if (cycle.id === activeCycleId) {
-          return {
-            ...cycle,
-            finishedDate: new Date(),
-          };
-        }
-        return cycle;
-      })
-    );
-    setActiveCycleId(null);
+    if (activeCycleId) {
+      dispatch({
+        type: "MARK_ACTIVE_CYCLE_AS_FINESHED",
+        payload: { data: activeCycleId },
+      });
+      setActiveCycleId(null);
+    }
   }
 
   function interruptActiveCycle() {
-    setCycles((prev) =>
-      prev.map((cycle) => {
-        if (cycle.id === activeCycleId) {
-          return {
-            ...cycle,
-            interruptedDate: new Date(),
-          };
-        }
-        return cycle;
-      })
-    );
-    setActiveCycleId(null);
+    if (activeCycleId) {
+      dispatch({
+        type: "INTERRUPT_ACTIVE_CYCLE",
+        payload: { data: activeCycleId },
+      });
+      setActiveCycleId(null);
+    }
   }
 
   return (
