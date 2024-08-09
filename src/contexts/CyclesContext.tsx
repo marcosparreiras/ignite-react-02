@@ -10,11 +10,12 @@ export interface Cycle {
   task: string;
   minutesAmount: number;
   startDate: Date;
-  inteeruptedDate?: Date;
+  interruptedDate?: Date;
   finishedDate?: Date;
 }
 
 interface CyclesContextType {
+  cycles: Cycle[];
   activeCycle?: Cycle;
   amountSecondsPassed: number;
   startNewCycle: (cycle: Cycle) => void;
@@ -65,7 +66,7 @@ export function CyclesContextProvider({ children }: PropsWithChildren) {
         if (cycle.id === activeCycleId) {
           return {
             ...cycle,
-            inteeruptedDate: new Date(),
+            interruptedDate: new Date(),
           };
         }
         return cycle;
@@ -83,6 +84,7 @@ export function CyclesContextProvider({ children }: PropsWithChildren) {
         updateAmountSecondsPassed,
         startNewCycle,
         interruptActiveCycle,
+        cycles,
       }}
     >
       {children}
