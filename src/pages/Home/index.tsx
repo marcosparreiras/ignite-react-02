@@ -9,7 +9,8 @@ import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { NewCycleForm } from "./NewCycleForm";
 import { CountDown } from "./CountDown";
-import { useCyclesContext, type Cycle } from "../../contexts/CyclesContext";
+import { useCyclesContext } from "../../contexts/CyclesContext";
+import type { Cycle } from "../../reducers/cycles";
 
 const newCycleValidationSchema = z.object({
   task: z.string().min(1, "Informe a tarefa"),
