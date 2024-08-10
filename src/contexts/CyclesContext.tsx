@@ -29,56 +29,75 @@ export const CyclesContext = createContext<CyclesContextType>(
   {} as CyclesContextType
 );
 
-type Action =
+interface CyclesState {
+  cycles: Cycle[];
+  activeCycleId: string | null;
+}
+
+type CyclesAction =
   | {
       type: "ADD_NEW_CYCLE";
-      payload: { data: Cycle };
+      payload: { cycle: Cycle };
     }
   | {
       type: "MARK_ACTIVE_CYCLE_AS_FINESHED" | "INTERRUPT_ACTIVE_CYCLE";
-      payload: { data: string };
     };
 
 export function CyclesContextProvider({ children }: PropsWithChildren) {
-  const [cycles, dispatch] = useReducer((state: Cycle[], action: Action) => {
-    switch (action.type) {
-      case "ADD_NEW_CYCLE":
-        return [...state, action.payload.data];
-
-      case "MARK_ACTIVE_CYCLE_AS_FINESHED":
-        return state.map((cycle) => {
-          if (cycle.id === action.payload.data) {
-            return {
-              ...cycle,
-              finishedDate: new Date(),
-            };
-          }
-          return cycle;
-        });
-
-      case "INTERRUPT_ACTIVE_CYCLE":
-        return state.map((cycle) => {
-          if (cycle.id === action.payload.data) {
-            return {
-              ...cycle,
-              interruptedDate: new Date(),
-            };
-          }
-          return cycle;
-        });
-
-      default:
-        return state;
-    }
-  }, []);
-  const [activeCycleId, setActiveCycleId] = useState<string | null>(null);
   const [amountSecondsPassed, setAmountSecondsPassed] = useState<number>(0);
+  const [cyclesState, dispatch] = useReducer(
+    (state: CyclesState, action: CyclesAction) => {
+      switch (action.type) {
+        case "ADD_NEW_CYCLE":
+          return {
+            ...state,
+            activeCycleId: action.payload.cycle.id,
+            cycles: [...state.cycles, action.payload.cycle],
+          };
 
-  const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId);
+        case "MARK_ACTIVE_CYCLE_AS_FINESHED":
+          return {
+            ...state,
+            activeCycleId: null,
+            cycles: state.cycles.map((cycle) => {
+              if (cycle.id === state.activeCycleId) {
+                return {
+                  ...cycle,
+                  finishedDate: new Date(),
+                };
+              }
+              return cycle;
+            }),
+          };
+
+        case "INTERRUPT_ACTIVE_CYCLE":
+          return {
+            ...state,
+            activeCycleId: null,
+            cycles: state.cycles.map((cycle) => {
+              if (cycle.id === state.activeCycleId) {
+                return {
+                  ...cycle,
+                  interruptedDate: new Date(),
+                };
+              }
+              return cycle;
+            }),
+          };
+
+        default:
+          return state;
+      }
+    },
+    { cycles: [], activeCycleId: null }
+  );
+
+  const activeCycle = cyclesState.cycles.find(
+    (cycle) => cycle.id === cyclesState.activeCycleId
+  );
 
   function startNewCycle(cycle: Cycle) {
-    dispatch({ type: "ADD_NEW_CYCLE", payload: { data: cycle } });
-    setActiveCycleId(cycle.id);
+    dispatch({ type: "ADD_NEW_CYCLE", payload: { cycle } });
     setAmountSecondsPassed(0);
   }
 
@@ -87,22 +106,18 @@ export function CyclesContextProvider({ children }: PropsWithChildren) {
   }
 
   function markActiveCycleAsFineshed() {
-    if (activeCycleId) {
+    if (cyclesState.activeCycleId) {
       dispatch({
         type: "MARK_ACTIVE_CYCLE_AS_FINESHED",
-        payload: { data: activeCycleId },
       });
-      setActiveCycleId(null);
     }
   }
 
   function interruptActiveCycle() {
-    if (activeCycleId) {
+    if (cyclesState.activeCycleId) {
       dispatch({
         type: "INTERRUPT_ACTIVE_CYCLE",
-        payload: { data: activeCycleId },
       });
-      setActiveCycleId(null);
     }
   }
 
@@ -115,7 +130,7 @@ export function CyclesContextProvider({ children }: PropsWithChildren) {
         updateAmountSecondsPassed,
         startNewCycle,
         interruptActiveCycle,
-        cycles,
+        cycles: cyclesState.cycles,
       }}
     >
       {children}
